@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <!-- CSS -->
+    <link href="//cdn.muicss.com/mui-latest/css/mui.min.css" rel="stylesheet" type="text/css" />
+    <link href="static/styles.css" rel="stylesheet" type="text/css" />
+    
+    <!-- JS -->
+    <script src="//cdn.muicss.com/mui-latest/js/mui.min.js"></script>
+    <script src="//code.jquery.com/jquery-2.1.4.min.js"></script>
+    <script type="text/javascript" src="static/infobox.js"></script>
+    <script src="static/script.js"></script>
+    
+    <script>
+var map;
+
+function initMap() {
+  map = new google.maps.Map(document.getElementById('map-canvas'), {
+    center: new google.maps.LatLng(39.9526,-75.1652), // Philly
+    zoom: 7
+  });
+  
+  $( ".blurbs" ).append( "Our region is located along the famous Atlantic Flyway, a migratory route that stretches from the arctic tundra of the Alaskan north slope to the tropical rainforests of South America.  Millions of waterfowl, songbirds and raptors depend on the biodiversity of our forest and field, farmland and wetland, mountains and seashore for food and for rest as the great flyway ushers them from southerly wintertime retreats to northern breeding grounds. Many species have evolved to arrive at the local flush of insects, nectar, seeds or larger prey.  Spring, summer, autumn and winter, these birding hotspots offer great opportunities to reconnect with the natural world and learn more about the intelligent travellers that are birds.<br></br>Select a hotspot from the menu at left to learn more about the species recently sighted at these premier locations." );
+  
+  $("#weatherbox").hide();
+  
+  google.maps.event.addDomListener(window, "resize", function() {
+			var center = map.getCenter();
+			google.maps.event.trigger(map, "resize");
+			map.setCenter(center);
+		}); 
+}
+
+function newLocation(newLat,newLng) {
+	map.setCenter({
+		lat : newLat,
+		lng : newLng
+	});
+	map.setZoom(9);
+	
+}
+google.maps.event.addDomListener(window, 'load', initMap);
+
+</script>
+
+<script>
+
+$(document).ready(function () {
+  
+     $("#1").on('click', function () {
+    
+     $("#weatherbox").show();
+     
+	  newLocation(40.0560339,-75.2522278,9);
+	  var scee = {lat: 40.0560339, lng: -75.2522278};
+	  var jsonstuff = (function () {
+            var json = null;
+            $.ajax({
+               'async': false,
+                'global': false,
+                'url': 'http://ebird.org/ws1.1/data/obs/hotspot/recent?r=L1062785&back=14&fmt=json',
+                'dataType': "json",
+                'success': function (data) {
+                    json = data;
+                }
+            });
+            return json;
+    
+        })();
+        
+        var weatherstuff = (function () {
+            var json2 = null;
+            $.ajax({
+               'async': false,
+                'global': false,
+                'url': 'http://api.openweathermap.org/data/2.5/weather?id=5185267&appid=97fdbcc4c41b4d904ac584138fc2097e',
+                'dataType': "json",
+                'success': function (data) {
+                    //json2 = data;
+                    $('.weather1, .weather2, .weather3, .weather4').empty();
+                    $('.weather1').append('Temperature: ' + Math.round(((data.main.temp - 273.15) * 1.8) + 32) + '°F');
+                    $('.weather2').append('Current Conditions: ' + data.weather[0].description);
+                    $('.weather3').append('Cloud Cover: ' + data.clouds.all + '%');
+                    $('.weather4').append('Humidity: ' + data.main.humidity + '%');
+                    
+                }
+            });
+            //return json2;
+    
+        })();
+        
+        $( ".blurbs" ).html( "Click on the map marker to generate a list of birds sighted in the past two weeks at <strong><em>The Schuylkill Center for Environmental Education</em></strong>. Then, simply click on a common name in the list to automatically search for the Audubon field guide entry for that species.  Enjoy learning about these amazing local birds and then visit us to see them in person!" );
+        
+        $("#rightside").html("SCEE");
+        
+        $("#flyway").remove();
+
+        var contentString = '<div class="content">'+
+            '<h4><em>Recent bird sightings at:</em></h4>'+
+            '<h4><a href="http://www.schuylkillcenter.org/">The Schuylkill Center for Environmental Education</a></h4>'+
+            '<div id="nodata"></div>' +
+            '<div>'+
+            '<ul id="jsonData"></ul>'+
+            '</div>'+
+            '</div>';
+
+        var infowindow = new google.maps.InfoWindow({
+          content: contentString,
+          maxWidth: 200
+        });
+
+        var marker = new google.maps.Marker({
+          position: scee,
+          map: map,
+          title: 'The Schuylkill Center',
+          animation: google.maps.Animation.DROP
+        });
+        
+        marker.addListener('click', function() {
+          infowindow.open(map, marker);
+          if ( jsonstuff.length !== 0 ) {
+        
+    
+          $.each(jsonstuff, function (key, val) {
+          $('#jsonData').append("<li class='crash'>" + val.comName + "</li>");
+          });
+          var classHighlight = 'highlight';
+          var $thumbs = $('.crash').click(function() {
+              $thumbs.removeClass(classHighlight);
+              $(this).addClass(classHighlight);
+          });
+        }
+        else { 
+            console.log("NO CURRENT DATA!");
+            $('#nodata').append("NO CURRENT DATA");
+        }
+          $("#jsonData").on("click", "li", function() {
+                
+                var content = $(this).html();// from http://jsfiddle.net/deovgtje/1/
+                $("#gsc-i-id1").val(content);
+                $('input.gsc-search-button').click();
+                $('form.gsc-search-box'); // from http://jsbin.com/UgUxEKo/3/edit?html,output
+        });
+        });
+        
+        infowindow.addListener('closeclick', function () {
+            marker.setMap(null);
+            map.setCenter(scee);
+            map.setZoom(9);
+        });
+
+        
+      (function() {
+    var cx = '000716666758761337909:_gunpiygdy8';
+    var gcse = document.createElement('script');
+    gcse.type = 'text/javascript';
+    gcse.async = true;
+    gcse.src = 'https://cse.google.com/cse.js?cx=' + cx;
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(gcse, s);
+  })();
+	});
+  
+	 $("#2").on('click', function () {
+	     
+	  $("#weatherbox").show();
+	  
+	  newLocation(40.123349,-75.4421161);
+	  var audubon = {lat: 40.123349, lng: -75.4421161};
+	  var jsonstuff = (function () {
+            var json = null;
+            $.ajax({
+               'async': false,
+                'global': false,
+                'url': 'http://ebird.org/ws1.1/data/obs/hotspot/recent?r=L144860&back=14&fmt=json',
+                'dataType': "json",
+                'success': function (data) {
+                    json = data;
+                }
+            });
+            return json;
+    
+        })();
+        
+        var weatherstuff = (function () {
+            var json2 = null;
+            $.ajax({
+               'async': false,
+                'global': false,
+                'url': 'http://api.openweathermap.org/data/2.5/weather?id=5178686&appid=97fdbcc4c41b4d904ac584138fc2097e',
+                'dataType': "json",
+                'success': function (data) {
+                    //json2 = data;
+                    $('.weather1, .weather2, .weather3, .weather4').empty();
+                    $('.weather1').append('Temperature: ' + Math.round(((data.main.temp - 273.15) * 1.8) + 32) + '°F');
+                    $('.weather2').append('Current Conditions: ' + data.weather[0].description);
+                    $('.weather3').append('Cloud Cover: ' + data.clouds.all + '%');
+                    $('.weather4').append('Humidity: ' + data.main.humidity + '%');
+                    
+                }
+            });
+            //return json2;
+    
+        })();
+
+        
+        $( ".blurbs" ).html( "Click on the map marker to generate a list of birds sighted in the past two weeks at <strong><em>The John James Audubon Center</em></strong>. Then, simply click on a common name in the list to automatically search for the Audubon field guide entry for that species.  Enjoy learning about these amazing local birds and then visit us to see them in person!" );
+        
+         $("#rightside").html("AUDUBON");
+         
+         $("#flyway").remove();
+
+        var contentString = '<div class="content">'+
+            '<h4><em>Recent bird sightings at:</em></h4>'+
+            '<h4><a href="http://johnjames.audubon.org/">John James Audubon Center</a></h4>'+
+            '<div id="nodata"></div>' +
+            '<div>'+
+            '<ul id="jsonData"></ul>'+
+            '</div>'+
+            '</div>';
+
+        var infowindow = new google.maps.InfoWindow({
+          content: contentString,
+          maxWidth: 200
+        });
+
+        var marker = new google.maps.Marker({
+          position: audubon,
+          map: map,
+          title: 'John James Audubon Center',
+          animation: google.maps.Animation.DROP
+        });
+        
+        marker.addListener('click', function() {
+          infowindow.open(map, marker);
+          if ( jsonstuff.length !== 0 ) {
+        
+    
+          $.each(jsonstuff, function (key, val) {
+          $('#jsonData').append("<li class='crash'>" + val.comName + "</li>");
+          });
+          var classHighlight = 'highlight';
+          var $thumbs = $('.crash').click(function() {
+              $thumbs.removeClass(classHighlight);
+              $(this).addClass(classHighlight);
+          });
+        }
+        else { 
+            console.log("NO CURRENT DATA!");
+            $('#nodata').append("NO CURRENT DATA");
+        }
+          $("#jsonData").on("click", "li", function() {
+                
+                var content = $(this).html();// from http://jsfiddle.net/deovgtje/1/
+                $("#gsc-i-id1").val(content);
+                $('input.gsc-search-button').click();
+                $('form.gsc-search-box'); // from http://jsbin.com/UgUxEKo/3/edit?html,output
+        });
+        });
+        
+        infowindow.addListener('closeclick', function () {
+            marker.setMap(null);
+            map.setCenter(audubon);
+            map.setZoom(9);
+        });
+        (function() {
+    var cx = '000716666758761337909:_gunpiygdy8';
+    var gcse = document.createElement('script');
+    gcse.type = 'text/javascript';
+    gcse.async = true;
+    gcse.src = 'https://cse.google.com/cse.js?cx=' + cx;
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(gcse, s);
+  })();
+	});
+	
+	
+   $("#3").on('click', function () {
+      
+      $("#weatherbox").show();
+      
+	  newLocation(38.9549566,-74.8638499);
+	  var cape_may = {lat: 38.9549566, lng: -74.8638499};
+	  var jsonstuff = (function () {
+            var json = null;
+            $.ajax({
+               'async': false,
+                'global': false,
+                'url': 'http://ebird.org/ws1.1/data/obs/hotspot/recent?r=L252297&back=14&fmt=json',
+                'dataType': "json",
+                'success': function (data) {
+                    json = data;
+                }
+            });
+            return json;
+    
+        })();
+        
+        var weatherstuff = (function () {
+            var json2 = null;
+            $.ajax({
+               'async': false,
+                'global': false,
+                'url': 'http://api.openweathermap.org/data/2.5/weather?id=4501066&appid=97fdbcc4c41b4d904ac584138fc2097e',
+                'dataType': "json",
+                'success': function (data) {
+                    //json2 = data;
+                    $('.weather1, .weather2, .weather3, .weather4').empty();
+                    $('.weather1').append('Temperature: ' + Math.round(((data.main.temp - 273.15) * 1.8) + 32) + '°F');
+                    $('.weather2').append('Current Conditions: ' + data.weather[0].description);
+                    $('.weather3').append('Cloud Cover: ' + data.clouds.all + '%');
+                    $('.weather4').append('Humidity: ' + data.main.humidity + '%');
+                    
+                }
+            });
+            //return json2;
+    
+        })();
+        
+        
+        $( ".blurbs" ).html( "Click on the map marker to generate a list of birds sighted in the past two weeks at <strong><em>Cape May National Wildlife Refuge</em></strong>. Then, simply click on a common name in the list to automatically search for the Audubon field guide entry for that species.  Enjoy learning about these amazing local birds and then visit us to see them in person!" );
+        
+         $("#rightside").html("CAPE MAY");
+         
+         $("#flyway").remove();
+
+        var contentString = '<div class="content">'+
+            '<h4><em>Recent bird sightings at:</em></h4>'+
+            '<h4><a href="https://www.fws.gov/refuge/cape_may/">Cape May NWR</a></h4>'+
+            '<div id="nodata"></div>' +
+            '<div>'+
+            '<ul id="jsonData"></ul>'+
+            '</div>'+
+            '</div>';
+
+        var infowindow = new google.maps.InfoWindow({
+          content: contentString,
+          maxWidth: 200
+        });
+
+        var marker = new google.maps.Marker({
+          position: cape_may,
+          map: map,
+          title: 'Cape May NWR',
+          animation: google.maps.Animation.DROP
+        });
+        
+        marker.addListener('click', function() {
+          infowindow.open(map, marker);
+          if ( jsonstuff.length !== 0 ) {
+        
+    
+          $.each(jsonstuff, function (key, val) {
+          $('#jsonData').append("<li class='crash'>" + val.comName + "</li>");
+          });
+          var classHighlight = 'highlight';
+          var $thumbs = $('.crash').click(function() {
+              $thumbs.removeClass(classHighlight);
+              $(this).addClass(classHighlight);
+          });
+        }
+        else { 
+            console.log("NO CURRENT DATA!");
+            $('#nodata').append("NO CURRENT DATA");
+        }
+          $("#jsonData").on("click", "li", function() {
+                
+                var content = $(this).html();// from http://jsfiddle.net/deovgtje/1/
+                $("#gsc-i-id1").val(content);
+                $('input.gsc-search-button').click();
+                $('form.gsc-search-box'); // from http://jsbin.com/UgUxEKo/3/edit?html,output
+        });
+        });
+        
+        infowindow.addListener('closeclick', function () {
+            marker.setMap(null);
+            map.setCenter(cape_may);
+            map.setZoom(9);
+        });
+        
+        (function() {
+    var cx = '000716666758761337909:_gunpiygdy8';
+    var gcse = document.createElement('script');
+    gcse.type = 'text/javascript';
+    gcse.async = true;
+    gcse.src = 'https://cse.google.com/cse.js?cx=' + cx;
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(gcse, s);
+  })();
+	});
+	
+	
+	$("#4").on('click', function () {
+	  
+	  $("#weatherbox").show();
+	  
+	  newLocation(40.8995168,-74.1791808);
+	  var garret_mtn = {lat: 40.8995168, lng: -74.1791808};
+	  var jsonstuff = (function () {
+            var json = null;
+            $.ajax({
+               'async': false,
+                'global': false,
+                'url': 'http://ebird.org/ws1.1/data/obs/hotspot/recent?r=L209818&back=14&fmt=json',
+                'dataType': "json",
+                'success': function (data) {
+                    json = data;
+                }
+            });
+            return json;
+    
+        })();
+        
+        var weatherstuff = (function () {
+            var json2 = null;
+            $.ajax({
+               'async': false,
+                'global': false,
+                'url': 'http://api.openweathermap.org/data/2.5/weather?id=5102466&appid=97fdbcc4c41b4d904ac584138fc2097e',
+                'dataType': "json",
+                'success': function (data) {
+                    //json2 = data;
+                    $('.weather1, .weather2, .weather3, .weather4').empty();
+                    $('.weather1').append('Temperature: ' + Math.round(((data.main.temp - 273.15) * 1.8) + 32) + '°F');
+                    $('.weather2').append('Current Conditions: ' + data.weather[0].description);
+                    $('.weather3').append('Cloud Cover: ' + data.clouds.all + '%');
+                    $('.weather4').append('Humidity: ' + data.main.humidity + '%');
+                    
+                }
+            });
+            //return json2;
+    
+        })();
+        
+        
+        $( ".blurbs" ).html( "Click on the map marker to generate a list of birds sighted in the past two weeks at the <strong><em>Garret Mountain Reservation</em></strong>. Then, simply click on a common name in the list to automatically search for the Audubon field guide entry for that species.  Enjoy learning about these amazing local birds and then visit us to see them in person!" );
+        
+         $("#rightside").html("GARRET MTN");
+         
+         $("#flyway").remove();
+
+        var contentString = '<div class="content">'+
+            '<h4><em>Recent bird sightings at:</em></h4>'+
+            '<h4><a href="http://www.nynjtc.org/park/garret-mountain-reservation">Garret Mountain Reserve</a></h4>'+
+            '<div id="nodata"></div>' +
+            '<div>'+
+            '<ul id="jsonData"></ul>'+
+            '</div>'+
+            '</div>';
+
+        var infowindow = new google.maps.InfoWindow({
+          content: contentString,
+          maxWidth: 200
+        });
+
+        var marker = new google.maps.Marker({
+          position: garret_mtn,
+          map: map,
+          title: 'Garret Mountain Reserve',
+          animation: google.maps.Animation.DROP
+        });
+        
+        marker.addListener('click', function() {
+          infowindow.open(map, marker);
+          if ( jsonstuff.length !== 0 ) {
+        
+    
+          $.each(jsonstuff, function (key, val) {
+          $('#jsonData').append("<li class='crash'>" + val.comName + "</li>");
+          });
+          var classHighlight = 'highlight';
+          var $thumbs = $('.crash').click(function() {
+              $thumbs.removeClass(classHighlight);
+              $(this).addClass(classHighlight);
+          });
+        }
+        else { 
+            console.log("NO CURRENT DATA!");
+            $('#nodata').append("NO CURRENT DATA");
+        }
+          $("#jsonData").on("click", "li", function() {
+                
+                var content = $(this).html();// from http://jsfiddle.net/deovgtje/1/
+                $("#gsc-i-id1").val(content);
+                $('input.gsc-search-button').click();
+                $('form.gsc-search-box'); // from http://jsbin.com/UgUxEKo/3/edit?html,output
+        });
+        });
+        
+        infowindow.addListener('closeclick', function () {
+            marker.setMap(null);
+            map.setCenter(garret_mtn);
+            map.setZoom(9);
+        });
+        
+        (function() {
+    var cx = '000716666758761337909:_gunpiygdy8';
+    var gcse = document.createElement('script');
+    gcse.type = 'text/javascript';
+    gcse.async = true;
+    gcse.src = 'https://cse.google.com/cse.js?cx=' + cx;
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(gcse, s);
+  })();
+	});
+	
+	
+	$("#5").on('click', function () {
+	    
+	  $("#weatherbox").show();
+	  
+	  newLocation(40.712492,-74.4879055);
+	  var great_swamp = {lat: 40.712492, lng: -74.4879055};
+	  var jsonstuff = (function () {
+            var json = null;
+            $.ajax({
+               'async': false,
+                'global': false,
+                'url': 'http://ebird.org/ws1.1/data/obs/hotspot/recent?r=L722649&back=14&fmt=json',
+                'dataType': "json",
+                'success': function (data) {
+                    json = data;
+                }
+            });
+            return json;
+    
+        })();
+        
+        var weatherstuff = (function () {
+            var json2 = null;
+            $.ajax({
+               'async': false,
+                'global': false,
+                'url': 'http://api.openweathermap.org/data/2.5/weather?id=5100748&appid=97fdbcc4c41b4d904ac584138fc2097e',
+                'dataType': "json",
+                'success': function (data) {
+                    //json2 = data;
+                    $('.weather1, .weather2, .weather3, .weather4').empty();
+                    $('.weather1').append('Temperature: ' + Math.round(((data.main.temp - 273.15) * 1.8) + 32) + '°F');
+                    $('.weather2').append('Current Conditions: ' + data.weather[0].description);
+                    $('.weather3').append('Cloud Cover: ' + data.clouds.all + '%');
+                    $('.weather4').append('Humidity: ' + data.main.humidity + '%');
+                    
+                }
+            });
+            //return json2;
+    
+        })();
+
+        
+        $( ".blurbs" ).html( "Click on the map marker to generate a list of birds sighted in the past two weeks at the <strong><em>Great Swamp National Wildlife Refuge</em></strong>. Then, simply click on a common name in the list to automatically search for the Audubon field guide entry for that species.  Enjoy learning about these amazing local birds and then visit us to see them in person!" );
+        
+         $("#rightside").html("GREAT SWAMP");
+         
+         $("#flyway").remove();
+
+        var contentString = '<div class="content">'+
+            '<h4><em>Recent bird sightings at:</em></h4>'+
+            '<h4><a href="https://www.fws.gov/refuge/great_swamp/">Great Swamp NWR</a></h4>'+
+            '<div id="nodata"></div>' +
+            '<div>'+
+            '<ul id="jsonData"></ul>'+
+            '</div>'+
+            '</div>';
+
+        var infowindow = new google.maps.InfoWindow({
+          content: contentString,
+          maxWidth: 200
+        });
+
+        var marker = new google.maps.Marker({
+          position: great_swamp,
+          map: map,
+          title: 'Great Swamp NWR',
+          animation: google.maps.Animation.DROP
+        });
+        
+        marker.addListener('click', function() {
+          infowindow.open(map, marker);
+          if ( jsonstuff.length !== 0 ) {
+        
+    
+          $.each(jsonstuff, function (key, val) {
+          $('#jsonData').append("<li class='crash'>" + val.comName + "</li>");
+          });
+          var classHighlight = 'highlight';
+          var $thumbs = $('.crash').click(function() {
+              $thumbs.removeClass(classHighlight);
+              $(this).addClass(classHighlight);
+          });
+        }
+        else { 
+            console.log("NO CURRENT DATA!");
+            $('#nodata').append("NO CURRENT DATA");
+        }
+          $("#jsonData").on("click", "li", function() {
+                
+                var content = $(this).html();// from http://jsfiddle.net/deovgtje/1/
+                $("#gsc-i-id1").val(content);
+                $('input.gsc-search-button').click();
+                $('form.gsc-search-box'); // from http://jsbin.com/UgUxEKo/3/edit?html,output
+        });
+        });
+        
+        infowindow.addListener('closeclick', function () {
+            marker.setMap(null);
+            map.setCenter(great_swamp);
+            map.setZoom(9);
+        });
+	  
+	  (function() {
+    var cx = '000716666758761337909:_gunpiygdy8';
+    var gcse = document.createElement('script');
+    gcse.type = 'text/javascript';
+    gcse.async = true;
+    gcse.src = 'https://cse.google.com/cse.js?cx=' + cx;
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(gcse, s);
+  })();
+        
+	});
+	
+	
+	$("#6").on('click', function () {
+	  
+	  $("#weatherbox").show();
+	  
+	  newLocation(40.6361396,-75.9855614);
+	  var hawk = {lat: 40.6361396, lng: -75.9855614};
+	  var jsonstuff = (function () {
+            var json = null;
+            $.ajax({
+               'async': false,
+                'global': false,
+                'url': 'http://ebird.org/ws1.1/data/obs/hotspot/recent?r=L1299466&back=14&fmt=json',
+                'dataType': "json",
+                'success': function (data) {
+                    json = data;
+                }
+            });
+            return json;
+    
+        })();
+        
+        var weatherstuff = (function () {
+            var json2 = null;
+            $.ajax({
+               'async': false,
+                'global': false,
+                'url': 'http://api.openweathermap.org/data/2.5/weather?id=5192444&appid=97fdbcc4c41b4d904ac584138fc2097e',
+                'dataType': "json",
+                'success': function (data) {
+                    //json2 = data;
+                    $('.weather1, .weather2, .weather3, .weather4').empty();
+                    $('.weather1').append('Temperature: ' + Math.round(((data.main.temp - 273.15) * 1.8) + 32) + '°F');
+                    $('.weather2').append('Current Conditions: ' + data.weather[0].description);
+                    $('.weather3').append('Cloud Cover: ' + data.clouds.all + '%');
+                    $('.weather4').append('Humidity: ' + data.main.humidity + '%');
+                    
+                }
+            });
+            //return json2;
+    
+        })();
+        
+        
+        $( ".blurbs" ).html( "Click on the map marker to generate a list of birds sighted in the past two weeks at <strong><em>Hawk Mountain Sanctuary</em></strong>. Then, simply click on a common name in the list to automatically search for the Audubon field guide entry for that species.  Enjoy learning about these amazing local birds and then visit us to see them in person!" );
+        
+         $("#rightside").html("HAWK MTN");
+         
+         $("#flyway").remove();
+
+        var contentString = '<div class="content">'+
+            '<h4><em>Recent bird sightings at:</em></h4>'+
+            '<h4><a href="http://www.hawkmountain.org/">Hawk Mountain</a></h4>'+
+            '<div id="nodata"></div>' +
+            '<div>'+
+            '<ul id="jsonData"></ul>'+
+            '</div>'+
+            '</div>';
+
+        var infowindow = new google.maps.InfoWindow({
+          content: contentString,
+          maxWidth: 200
+        });
+
+        var marker = new google.maps.Marker({
+          position: hawk,
+          map: map,
+          title: 'Hawk Mountain',
+          animation: google.maps.Animation.DROP
+        });
+        
+        marker.addListener('click', function() {
+          infowindow.open(map, marker);
+          if ( jsonstuff.length !== 0 ) {
+        
+    
+          $.each(jsonstuff, function (key, val) {
+          $('#jsonData').append("<li class='crash'>" + val.comName + "</li>");
+          });
+          var classHighlight = 'highlight';
+          var $thumbs = $('.crash').click(function() {
+              $thumbs.removeClass(classHighlight);
+              $(this).addClass(classHighlight);
+          });
+        }
+        else { 
+            console.log("NO CURRENT DATA!");
+            $('#nodata').append("NO CURRENT DATA");
+        }
+          $("#jsonData").on("click", "li", function() {
+                
+                var content = $(this).html();// from http://jsfiddle.net/deovgtje/1/
+                $("#gsc-i-id1").val(content);
+                $('input.gsc-search-button').click();
+                $('form.gsc-search-box'); // from http://jsbin.com/UgUxEKo/3/edit?html,output
+        });
+        });
+        
+        infowindow.addListener('closeclick', function () {
+            marker.setMap(null);
+            map.setCenter(hawk);
+            map.setZoom(9);
+        });
+        
+       (function() {
+    var cx = '000716666758761337909:_gunpiygdy8';
+    var gcse = document.createElement('script');
+    gcse.type = 'text/javascript';
+    gcse.async = true;
+    gcse.src = 'https://cse.google.com/cse.js?cx=' + cx;
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(gcse, s);
+  })();
+	});
+
+	
+	$("#7").on('click', function () {
+	  
+	  $("#weatherbox").show();
+	  
+	  newLocation(39.8893501,-75.2601457);
+	  var heinz = {lat: 39.8893501, lng: -75.2601457};
+	  var jsonstuff = (function () {
+            var json = null;
+            $.ajax({
+               'async': false,
+                'global': false,
+                'url': 'http://ebird.org/ws1.1/data/obs/hotspot/recent?r=L504403&back=14&fmt=json',
+                'dataType': "json",
+                'success': function (data) {
+                    json = data;
+                }
+            });
+            return json;
+    
+        })();
+        
+        var weatherstuff = (function () {
+            var json2 = null;
+            $.ajax({
+               'async': false,
+                'global': false,
+                'url': 'http://api.openweathermap.org/data/2.5/weather?id=4558004&appid=97fdbcc4c41b4d904ac584138fc2097e',
+                'dataType': "json",
+                'success': function (data) {
+                    //json2 = data;
+                    $('.weather1, .weather2, .weather3, .weather4').empty();
+                    $('.weather1').append('Temperature: ' + Math.round(((data.main.temp - 273.15) * 1.8) + 32) + '°F');
+                    $('.weather2').append('Current Conditions: ' + data.weather[0].description);
+                    $('.weather3').append('Cloud Cover: ' + data.clouds.all + '%');
+                    $('.weather4').append('Humidity: ' + data.main.humidity + '%');
+                    
+                }
+            });
+            //return json2;
+    
+        })();
+        
+        
+        $( ".blurbs" ).html( "Click on the map marker to generate a list of birds sighted in the past two weeks at the<strong><em>John Heinz National Wildlife Refuge</em></strong>. Then, simply click on a common name in the list to automatically search for the Audubon field guide entry for that species.  Enjoy learning about these amazing local birds and then visit us to see them in person!" );
+        
+         $("#rightside").html("HEINZ");
+         
+         $("#flyway").remove();
+
+        var contentString = '<div class="content">'+
+            '<h4><em>Recent bird sightings at:</em></h4>'+
+            '<h4><a href="https://www.fws.gov/refuge/John_Heinz/">John Heinz NWR</a></h4>' +
+            '<div id="nodata"></div>' +
+            '<div>'+
+            '<ul id="jsonData"></ul>'+
+            '</div>'+
+            '</div>';
+
+        var infowindow = new google.maps.InfoWindow({
+          content: contentString,
+          maxWidth: 200
+        });
+
+        var marker = new google.maps.Marker({
+          position: heinz,
+          map: map,
+          title: 'John Heinz NWR',
+          animation: google.maps.Animation.DROP
+        });
+        
+        marker.addListener('click', function() {
+          infowindow.open(map, marker);
+          if ( jsonstuff.length !== 0 ) {
+        
+    
+          $.each(jsonstuff, function (key, val) {
+          $('#jsonData').append("<li class='crash'>" + val.comName + "</li>");
+          });
+          var classHighlight = 'highlight';
+          var $thumbs = $('.crash').click(function() {
+              $thumbs.removeClass(classHighlight);
+              $(this).addClass(classHighlight);
+          });
+        }
+        else { 
+            console.log("NO CURRENT DATA!");
+            $('#nodata').append("NO CURRENT DATA");
+        }
+          $("#jsonData").on("click", "li", function() {
+                
+                var content = $(this).html();// from http://jsfiddle.net/deovgtje/1/
+                $("#gsc-i-id1").val(content);
+                $('input.gsc-search-button').click();
+                $('form.gsc-search-box'); // from http://jsbin.com/UgUxEKo/3/edit?html,output
+        });
+        });
+        
+        infowindow.addListener('closeclick', function () {
+            marker.setMap(null);
+            map.setCenter(heinz);
+            map.setZoom(9);
+        });
+        
+        (function() {
+    var cx = '000716666758761337909:_gunpiygdy8';
+    var gcse = document.createElement('script');
+    gcse.type = 'text/javascript';
+    gcse.async = true;
+    gcse.src = 'https://cse.google.com/cse.js?cx=' + cx;
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(gcse, s);
+  })();
+	});
+});
+
+</script>
+    
+</head>
+  
+  <body>
+    <div id="sidedrawer" class="mui--no-user-select">
+      <div id="sidedrawer-brand" class="mui--appbar-line-height"><a href="index.html">Birding Hotspots</a></div>
+      <div class="mui-divider"></div>
+      <ul>
+        <li class="mui--z1">
+          <a id="1" class="place" href="#"><strong>The Schuylkill Center</strong></a>
+          <!--<ul>
+            <li><a href="#">Item 1</a></li>
+            <li><a href="#">Item 2</a></li>
+            <li><a href="#">Item 3</a></li>
+          </ul>-->
+        </li>
+        <li class="mui--z1">
+          <a id="2" class="place" href="#"><strong>John James Audubon Center</strong></a>
+          <!--<ul>
+            <li><a href="#">Item 1</a></li>
+            <li><a href="#">Item 2</a></li>
+            <li><a href="#">Item 3</a></li>
+          </ul>-->
+        </li>
+        <li class="mui--z1">
+          <a id="3" class="place" href="#"><strong>Cape May NWR</strong></a>
+          <!--<ul>
+            <li><a href="#">Item 1</a></li>
+            <li><a href="#">Item 2</a></li>
+            <li><a href="#">Item 3</a></li>
+          </ul>-->
+        </li>
+        <li class="mui--z1">
+          <a id="4" class="place" href="#"><strong>Garret Mountain Reserve</strong></a>
+          <!--<ul>
+            <li><a href="#">Item 1</a></li>
+            <li><a href="#">Item 2</a></li>
+            <li><a href="#">Item 3</a></li>
+          </ul>-->
+        </li>
+        <li class="mui--z1">
+          <a id="5" class="place" href="#"><strong>Great Swamp</strong></a>
+          <!--<ul>
+            <li><a href="#">Item 1</a></li>
+            <li><a href="#">Item 2</a></li>
+            <li><a href="#">Item 3</a></li>
+          </ul>-->
+        </li>
+        <li class="mui--z1">
+          <a id="6" class="place" href="#"><strong>Hawk Mountain</strong></a>
+          <!--<ul>
+            <li><a href="#">Item 1</a></li>
+            <li><a href="#">Item 2</a></li>
+            <li><a href="#">Item 3</a></li>
+          </ul>-->
+        </li>
+        <li class="mui--z1">
+          <a id="7" class="place" href="#"><strong>John Heinz NWR</strong></a>
+          <!--<ul>
+            <li><a href="#">Item 1</a></li>
+            <li><a href="#">Item 2</a></li>
+            <li><a href="#">Item 3</a></li>
+          </ul>-->
+        </li>
+      </ul>
+    </div>
+    <header id="header" class="mui--z1">
+      <div class="mui-appbar mui--appbar-line-height">
+        <div class="mui-container-fluid">
+          <a class="sidedrawer-toggle mui--visible-xs-inline-block mui--visible-sm-inline-block js-show-sidedrawer">☰</a>
+          <a class="sidedrawer-toggle mui--hidden-xs mui--hidden-sm js-hide-sidedrawer">☰</a>
+          <span class="mui--text-title mui--visible-xs-inline-block mui--visible-sm-inline-block">Birding Hotspots</span>
+          <span class="mui--text-title mui--visible-xs-inline-block mui--visible-sm-inline-block mui--align-middle" id="rightside">INTRO</span></div>
+      </div>
+    </header>
+    <br></br>
+    <br></br>
+    <div id="content-wrapper">
+      <div id="beforesummary" class="mui--appbar-height"></div>
+      <div id="summary" class="mui-container-fluid">
+          
+<div id="map-canvas"></div>
+<br>
+<!--<div class="mui-row">
+<div class="mui-col-xs-12 mui-col-md-6"><p class="blurbs"></p></div>
+<div class="mui-col-xs-12 mui-col-md-6" id="searchbar"><img id="flyway" src="atlantic_flyway.jpg"></div>
+
+<gcse:search></gcse:search>
+</div>
+<br>
+<div class="mui-row">
+  <div class="mui-col-xs-10 mui-col-s-8 mui-col-md-6" id="weatherbox">
+    <h3><em><strong>Local Weather</strong></em></h3>
+    <div class="weather1"></div>
+    <div class="weather2"></div>
+    <div class="weather3"></div>
+    <div class="weather4"></div>
+  </div>
+</div>-->
+<div class="mui-row">
+<div class="mui-col-xs-12 mui-col-md-6"><p class="blurbs"></p></div>
+<div class="mui-col-xs-12 mui-col-md-6" id="searchbar"><img id="flyway" src="atlantic_flyway.jpg"></div>
+<div class="mui-col-xs-12 mui-col-s-8 mui-col-md-6" id="weatherbox">
+    <h3><em><strong>Local Weather</strong></em></h3>
+    <div class="weather1"></div>
+    <div class="weather2"></div>
+    <div class="weather3"></div>
+    <div class="weather4"></div>
+  </div>
+
+</div>
+<br>
+<div class="mui-row">
+  <gcse:search></gcse:search>
+</div>
+<br></br>
+</script>
+</div>
+</div>
+<script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCPlYDmfhuarqC70mkJ7YV2EjnCnSpiZJU&callback=initMap">
+    </script><!-- had this in header initially, but it belongs here -- https://developers.google.com/maps/tutorials/fundamentals/adding-a-google-map#the_finished_code-->
+    
+<script type="text/javascript">
+   if(window.location.href.substr(-2) !== "?r") {
+      window.location = window.location.href + "?r";
+    }
+</script><!--http://stackoverflow.com/questions/6160415/reload-an-html-page-just-once-using-javascript-->
+</body>
+</html>

@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <!-- CSS -->
+    <link href="//cdn.muicss.com/mui-latest/css/mui.min.css" rel="stylesheet" type="text/css" />
+    <link href="static/styles.css" rel="stylesheet" type="text/css" />
+    
+    <!-- JS -->
+    <script src="//cdn.muicss.com/mui-latest/js/mui.min.js"></script>
+    <script src="//code.jquery.com/jquery-2.1.4.min.js"></script>
+    <script type="text/javascript" src="static/infobox.js"></script>
+    <script src="static/script.js"></script>
+    
+    <script>
+      function initMap() {
+        var heinz = {lat: 39.8893501, lng: -75.2601457};
+        var map = new google.maps.Map(document.getElementById('location-canvas'), {
+          zoom: 9,
+          center: heinz
+        });
+        
+        var jsonstuff = (function () {
+            var json = null;
+            $.ajax({
+               'async': false,
+                'global': false,
+                'url': 'http://ebird.org/ws1.1/data/obs/hotspot/recent?r=L504403&back=14&fmt=json',
+                'dataType': "json",
+                'success': function (data) {
+                    json = data;
+                }
+            });
+            return json;
+    
+        })();
+
+        var contentString = '<div class="content">'+
+            '<h4><em>Recent bird sightings at:</em></h4>'+
+            '<h4><a href="https://www.fws.gov/refuge/John_Heinz/">John Heinz NWR</a></h4>'+
+            '<div>'+
+            '<ul id="jsonData"></ul>'+
+            '</div>'+
+            '</div>';
+
+        var infowindow = new google.maps.InfoWindow({
+          content: contentString,
+          maxWidth: 200
+        });
+
+        var marker = new google.maps.Marker({
+          position: heinz,
+          map: map,
+          title: 'John Heinz NWR',
+          animation: google.maps.Animation.DROP
+        });
+        
+        marker.addListener('click', function() {
+          infowindow.open(map, marker);
+          $.each(jsonstuff, function (key, val) {
+          $('#jsonData').append("<li class='crash'>" + val.comName + "</li>");
+          });
+          var classHighlight = 'highlight';
+          var $thumbs = $('.crash').click(function() {
+              $thumbs.removeClass(classHighlight);
+              $(this).addClass(classHighlight);
+          });
+          $("#jsonData").on("click", "li", function() {
+                
+                var content = $(this).html();// from http://jsfiddle.net/deovgtje/1/
+                $("#gsc-i-id1").val(content);
+                $('input.gsc-search-button').click();
+                $('form.gsc-search-box'); // from http://jsbin.com/UgUxEKo/3/edit?html,output
+        });
+        });
+        
+        infowindow.addListener('closeclick', function () {
+            map.setCenter(heinz);
+            map.setZoom(9);
+        });
+    
+    //code to make map responsive from https://codepen.io/hubpork/pen/xriIz/
+    
+     google.maps.event.addDomListener(window, "resize", function() {
+			var center = map.getCenter();
+			google.maps.event.trigger(map, "resize");
+			map.setCenter(center);
+		}); 
+		
+      }
+
+	google.maps.event.addDomListener(window, 'load', initialize);
+	
+  </script>
+  </head>
+  
+  <body>
+    <div id="sidedrawer" class="mui--no-user-select">
+      <div id="sidedrawer-brand" class="mui--appbar-line-height"><a href="index.html">Birding Hotspots</a></div>
+      <div class="mui-divider"></div>
+      <ul>
+        <li class="mui--z1">
+          <a href="scee.html"><strong>The Schuylkill Center</strong></a>
+          <!--<ul>
+            <li><a href="#">Item 1</a></li>
+            <li><a href="#">Item 2</a></li>
+            <li><a href="#">Item 3</a></li>
+          </ul>-->
+        </li>
+        <li class="mui--z1">
+          <a href="audubon.html"><strong>John James Audubon Center</strong></a>
+          <!--<ul>
+            <li><a href="#">Item 1</a></li>
+            <li><a href="#">Item 2</a></li>
+            <li><a href="#">Item 3</a></li>
+          </ul>-->
+        </li>
+        <li class="mui--z1">
+          <a href="heinz.html"><strong>John Heinz NWR</strong></a>
+          <!--<ul>
+            <li><a href="#">Item 1</a></li>
+            <li><a href="#">Item 2</a></li>
+            <li><a href="#">Item 3</a></li>
+          </ul>-->
+        </li>
+        <li class="mui--z1">
+          <a href="hawk.html"><strong>Hawk Mountain</strong></a>
+          <!--<ul>
+            <li><a href="#">Item 1</a></li>
+            <li><a href="#">Item 2</a></li>
+            <li><a href="#">Item 3</a></li>
+          </ul>-->
+        </li>
+        <li class="mui--z1">
+          <a href="cape_may.html"><strong>Cape May NWR</strong></a>
+          <!--<ul>
+            <li><a href="#">Item 1</a></li>
+            <li><a href="#">Item 2</a></li>
+            <li><a href="#">Item 3</a></li>
+          </ul>-->
+        </li>
+        <li class="mui--z1">
+          <a href="garret_mtn.html"><strong>Garret Mountain Reserve</strong></a>
+          <!--<ul>
+            <li><a href="#">Item 1</a></li>
+            <li><a href="#">Item 2</a></li>
+            <li><a href="#">Item 3</a></li>
+          </ul>-->
+        </li>
+        <li class="mui--z1">
+          <a href="great_swamp.html"><strong>Great Swamp NWR</strong></a>
+          <!--<ul>
+            <li><a href="#">Item 1</a></li>
+            <li><a href="#">Item 2</a></li>
+            <li><a href="#">Item 3</a></li>
+          </ul>-->
+        </li>
+      </ul>
+    </div>
+    <header id="header">
+      <div class="mui-appbar mui--appbar-line-height">
+        <div class="mui-container-fluid">
+          <a class="sidedrawer-toggle mui--visible-xs-inline-block mui--visible-sm-inline-block js-show-sidedrawer">☰</a>
+          <a class="sidedrawer-toggle mui--hidden-xs mui--hidden-sm js-hide-sidedrawer">☰</a>
+          <span class="mui--text-title mui--visible-xs-inline-block mui--visible-sm-inline-block">Birding Hotspots</span>
+          <span class="mui--text-title mui--visible-xs-inline-block mui--visible-sm-inline-block mui--align-middle" id="rightside">HEINZ</span>
+        </div>
+      </div>
+    </header>
+    <br></br>
+    <br></br>
+    <div id="content-wrapper">
+      <div id="beforesummary" class="mui--appbar-height"></div>
+      <div id="summary" class="mui-container-fluid">
+          
+<div id="location-canvas"></div>
+
+<br>
+<div id="searchInfo"><p>Click on the map marker to generate a list of birds sighted in the past two weeks at <strong><em>The John Heinz National Wildlife Refuge</em></strong>. Then, simply click on a common name in the list to automatically search for the Audubon field guide entry for that species.  Enjoy learning about these amazing local birds and then visit us to see them in person!</p></div>
+
+      
+</script>
+
+<script>
+  (function() {
+    var cx = '000716666758761337909:_gunpiygdy8';
+    var gcse = document.createElement('script');
+    gcse.type = 'text/javascript';
+    gcse.async = true;
+    gcse.src = 'https://cse.google.com/cse.js?cx=' + cx;
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(gcse, s);
+  })();
+</script>
+<gcse:search></gcse:search>
+</div>
+</div>
+
+<script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCPlYDmfhuarqC70mkJ7YV2EjnCnSpiZJU&callback=initMap">
+    </script><!-- had this in header initially, but it belongs here -- https://developers.google.com/maps/tutorials/fundamentals/adding-a-google-map#the_finished_code-->
+    
+<script type="text/javascript">
+   if(window.location.href.substr(-2) !== "?r") {
+      window.location = window.location.href + "?r";
+    }
+</script><!--http://stackoverflow.com/questions/6160415/reload-an-html-page-just-once-using-javascript-->
+</body>
+</html>
